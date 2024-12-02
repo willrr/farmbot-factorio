@@ -77,7 +77,7 @@ def get_online_player_count():
 @bot.event
 async def on_ready():
     print(f'We have logged in as {bot.user}')
-    await auto_update_check()
+    await auto_update_check.start()
 
 
 @bot.slash_command(guild_ids=config['guilds'], description="test command")
