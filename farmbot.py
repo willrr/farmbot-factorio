@@ -185,19 +185,19 @@ async def auto_update_check():
     if VersionInfo['update_required'] and VersionInfo['latest_stable'] != userconfig['notified_version']:
         userconfig['notified_version'] = VersionInfo['latest_stable']
         write_userconfig()
-        send_notification(factorio_version_output(VersionInfo))
+        await send_notification(factorio_version_output(get_factorio_versions()))
     if VersionInfo['update_required'] and userconfig['automatic_updates']:
         PlayerCount = get_online_player_count()
         if PlayerCount == 0:
-            send_notification(f"Starting update from version `{VersionInfo['current']}` to version `{VersionInfo['latest_stable']}`, there are 0 players on the server.")
+            await send_notification(f"Starting update from version `{VersionInfo['current']}` to version `{VersionInfo['latest_stable']}`, there are 0 players on the server.")
             restart_factorio()
             time.sleep(10)
-            send_notification(f"```\n{status_factorio()}\n```")
+            await send_notification(f"```\nUpdate complete\n{status_factorio()}\n```")
 
         elif PlayerCount == 1:
-            send_notification(f"Cannot update from version `{VersionInfo['current']}` to version `{VersionInfo['latest_stable']}`, there is 1 player on the server:\n```\n{get_online_players()}\n```")
+            await send_notification(f"Cannot update from version `{VersionInfo['current']}` to version `{VersionInfo['latest_stable']}`, there is 1 player on the server:\n```\n{get_online_players()}\n```")
         else: 
-            send_notification(f"Cannot update from version `{VersionInfo['current']}` to version `{VersionInfo['latest_stable']}`, there are `{PlayerCount}` players on the server:\n```\n{get_online_players()}\n```")
+            await send_notification(f"Cannot update from version `{VersionInfo['current']}` to version `{VersionInfo['latest_stable']}`, there are `{PlayerCount}` players on the server:\n```\n{get_online_players()}\n```")
 
 
 global userconfig
