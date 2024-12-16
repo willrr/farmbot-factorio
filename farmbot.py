@@ -1,5 +1,7 @@
-import discord, factorio_rcon, json, os, re, subprocess, sys, time, urllib.request
+import discord, factorio_rcon, json, os, re, shutil, subprocess, sys, time, urllib.request
+from discord import option
 from discord.ext import tasks
+from pathlib import Path
 
 sys.stdout.reconfigure(line_buffering=True)
 
@@ -51,6 +53,16 @@ def restart_factorio():
     return(status.decode())
 
 
+def start_factorio():
+    status = subprocess.check_output("sudo systemctl start factorio".split())
+    return(status.decode())
+
+
+def stop_factorio():
+    status = subprocess.check_output("sudo systemctl stop factorio".split())
+    return(status.decode())
+
+
 def status_factorio():
     status = subprocess.check_output("systemctl status factorio".split())
     StatusCleanList = []
@@ -72,6 +84,69 @@ def get_online_player_count():
     PlayerCountString = FactorioClient.send_command('/players online count')
     PlayerCount = int(re.match(r'^Online players \((\d+)\)', PlayerCountString).group(1))
     return(PlayerCount)
+
+
+def get_save_names(SavePath):
+    Saves = list(SavePath.glob("*.zip"))
+    return [ s for s in Saves if SaveFilter.match(s.name) ]
+
+
+SaveFilter = re.compile(r'^[A-Za-z0-9][A-Za-z0-9_ -]+.zip$')
+def get_current_save():
+    SavePath = Path(f"{config['factorio_path']}/saves")
+    return SavePath, get_save_names(SavePath)
+
+
+def get_stashes():
+    return [ s for s in Path(config['factorio_path']).glob("stash-*") if s.is_dir ]
+
+
+def convert_filename_to_stash_name(Filename):
+    return f"stash-{re.sub(r'.zip$', '', Filename)}"
+
+
+def convert_filename_to_save_name(Filename):
+    return f"{re.sub(r'.zip$', '', Filename)}"
+
+
+def convert_stash_name_to_filename(StashName):
+    return f"{re.sub(r'^stash-', '', StashName)}.zip"
+
+
+def convert_stash_name_to_save_name(StashName):
+    return f"{re.sub(r'^stash-', '', StashName)}"
+
+
+def convert_save_name_to_stash_name(SaveName):
+    return f"stash-{SaveName}"
+
+
+def create_stash(NewStashName):
+    FactorioPath = Path(config['factorio_path'])
+    Stashes = get_stashes()
+    if Stashes and NewStashName in [ s.name for s in Stashes ]:
+        raise ValueError('Stash already exists')
+    Path.mkdir(f"{FactorioPath}/{NewStashName}", mode=0o775, parents=False, exist_ok=False)
+    NewStash = Path(f"{FactorioPath}/{NewStashName}")
+    shutil.chown(NewStash, group="factorio")
+    return NewStash
+
+
+def switch_saves(Stash):
+    FactorioPath = Path(config['factorio_path'])
+    Stashes = get_stashes()
+    CurrentSavePath, CurrentSaveFiles = get_current_save()
+    CurrentSaveStashName = convert_filename_to_stash_name(CurrentSaveFiles[0].name)
+    if Stashes and CurrentSaveStashName in [ s.name for s in Stashes ]:
+        raise ValueError(f"Stash {CurrentSaveStashName} already exists")
+    stop_factorio()
+    time.sleep(1)
+    CurrentSaveStashPath = Path(f"{FactorioPath}/{CurrentSaveStashName}")
+    CurrentSavePath.rename(CurrentSaveStashPath)
+    Stash.rename(CurrentSavePath)
+    time.sleep(1)
+    start_factorio()
+    time.sleep(10)
 
 
 @bot.event
@@ -168,6 +243,64 @@ async def disableautomaticupdates(ctx):
 @bot.slash_command(guild_ids=config['guilds'], description="Show online players")
 async def playersonline(ctx):
     await ctx.respond(f"```\n{get_online_players()}\n```")
+
+
+def get_saves_output():
+    CurrentSaveName = convert_filename_to_save_name(get_current_save()[1][0].name)
+    StashedSaveNames = [ convert_stash_name_to_save_name(s.name) for s in get_stashes() ]
+    return f"Current Save: `{CurrentSaveName}`\nStashed Saves:\n- `{'`\n- `'.join(StashedSaveNames)}`"
+
+
+@bot.slash_command(guild_ids=config['guilds'], description="Show saves")
+async def showsaves(ctx):
+    await ctx.respond(get_saves_output())
+
+
+@bot.slash_command(guild_ids=config['guilds'], description="Upload save file to new stash")
+@option(
+    "save_file",
+    discord.Attachment,
+    description="Save file to import",
+    required=True
+)
+async def uploadnewsave(ctx, save_file: discord.Attachment):
+    if save_file.filename.__len__() > 128:
+        ctx.respond(f"Filename is too long, aborting.\nMaximum permitted filename length is 128 characters.")
+    if not SaveFilter.match(save_file.filename):
+        await ctx.respond(f"Filename uses illegal characters, aborting.\nAllowed Characters are `A-Za-z0-9` for the first character, and `A-Za-z0-9_ -` for subsequent characters.")
+    if save_file.filename in [ s.name for s in get_current_save()[1] ]:
+        await ctx.respond(f"Filename in use by current save, aborting.")
+        return
+    Stashes = get_stashes()
+    NewStashName = convert_filename_to_stash_name(save_file.filename)
+    if Stashes and NewStashName in [ s.name for s in Stashes ]:
+        await ctx.respond(f"Stash for filename already exists, aborting.")
+        return
+    NewStash = create_stash(NewStashName)
+    NewSavePath = f"{str(NewStash)}/{save_file.filename}"
+    await save_file.save(NewSavePath)
+    os.chmod(NewSavePath, 0o664)
+    shutil.chown(NewSavePath, group="factorio")
+    await ctx.respond(f"File `{save_file.filename}` successfully uploaded to new stash `{NewStashName}`.")
+
+
+def autocomplete_list_stashes():
+  return [ convert_stash_name_to_save_name(s.name) for s in get_stashes() ]
+
+
+@bot.slash_command(guild_ids=config['guilds'], description="Switch Save Files")
+@option(
+    "save",
+    str,
+    autocomplete=discord.utils.basic_autocomplete(autocomplete_list_stashes()),
+    description="Save file to import",
+    required=True
+)
+async def activatestashedsave(ctx, save: str):
+    await ctx.respond(f"Switching to save `{save}`")
+    SavePath = Path(f"{config['factorio_path']}/{convert_save_name_to_stash_name(save)}")
+    switch_saves(SavePath)
+    await ctx.respond(f"Switch Complete.\n```\n{status_factorio()}\n```\n{get_saves_output()}")
 
 
 async def send_notification(string):
