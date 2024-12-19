@@ -160,6 +160,16 @@ async def hello(ctx):
     await ctx.respond("hello")
 
 
+@bot.slash_command(guild_ids=config['guilds'], description="Start Factorio server")
+async def startfactorio(ctx):
+    await ctx.respond(start_factorio())
+
+
+@bot.slash_command(guild_ids=config['guilds'], description="Stop Factorio server")
+async def stopfactorio(ctx):
+    await ctx.respond(stop_factorio())
+
+
 @bot.slash_command(guild_ids=config['guilds'], description="Restart Factorio server")
 async def restartfactorio(ctx):
     await ctx.respond(restart_factorio())
