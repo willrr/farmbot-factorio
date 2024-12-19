@@ -294,7 +294,7 @@ async def uploadnewsave(ctx, save_file: discord.Attachment):
     await ctx.respond(f"File `{save_file.filename}` successfully uploaded to new stash `{NewStashName}`.")
 
 
-def autocomplete_list_stashes():
+async def autocomplete_list_stashes(ctx: discord.AutocompleteContext):
   return [ convert_stash_name_to_save_name(s.name) for s in get_stashes() ]
 
 
@@ -302,11 +302,11 @@ def autocomplete_list_stashes():
 @option(
     "save",
     str,
-    autocomplete=discord.utils.basic_autocomplete(autocomplete_list_stashes()),
+    autocomplete=autocomplete_list_stashes,
     description="Save file to import",
     required=True
 )
-async def activatestashedsave(ctx, save: str):
+async def activatestashedsave(ctx,save: str):
     await ctx.respond(f"Switching to save `{save}`")
     SavePath = Path(f"{config['factorio_path']}/{convert_save_name_to_stash_name(save)}")
     switch_saves(SavePath)
