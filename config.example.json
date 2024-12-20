@@ -5,5 +5,12 @@
     ],
     "factorio_path": "/opt/factorio",
     "rcon_password": "yourrconpasswordhere",
-    "rcon_port": 12345
+    "rcon_port": 12345,
+    "farmbot_default_admin_discord_users": [
+        {
+            "id": 12345,
+            "global_name": "ExampleUser",
+            "name": "exampleuser"
+        }
+    ]
 }

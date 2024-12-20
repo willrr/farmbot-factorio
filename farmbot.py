@@ -6,7 +6,9 @@ from pathlib import Path
 sys.stdout.reconfigure(line_buffering=True)
 
 config = json.load(open('config.json'))
-bot = discord.Bot()
+intents = discord.Intents.default()
+intents.members = True
+bot = discord.Bot(intents=intents)
 
 def write_userconfig():
     with open('userconfig.json', 'w') as f:
@@ -147,6 +149,10 @@ def switch_saves(Stash):
     time.sleep(1)
     start_factorio()
     time.sleep(10)
+
+
+# def get_farmbot_user_permission_level(UserId):
+#     return userconfig['users'][UserId]['permission_level']
 
 
 @bot.event
@@ -294,6 +300,111 @@ async def uploadnewsave(ctx, save_file: discord.Attachment):
     await ctx.respond(f"File `{save_file.filename}` successfully uploaded to new stash `{NewStashName}`.")
 
 
+@bot.slash_command(guild_ids=config['guilds'], description="Show your discord user id")
+async def showdiscorduserid(ctx):
+    await ctx.respond(ctx.author.id)
+
+
+# @bot.slash_command(guild_ids=config['guilds'], description="Show user debug")
+# async def showuserdebug(ctx, user):
+#     if not re.match(r'^<@\d+>$', user):
+#         await ctx.respond(f"Invalid request, please @tag a user")
+#         return
+#     UserId = int(re.sub(r'[<>@]', '', user))
+#     await ctx.respond([ m.global_name for m in ctx.guild.members if m.id == UserId ])
+
+
+def clean_tagged_user(User):
+    if not re.match(r'^<@\d+>$', User):
+        raise ValueError
+    return int(re.sub(r'[<>@]', '', User))
+
+
+def get_discord_user(ctx, UserId):
+    Users = [ m for m in ctx.guild.members if m.id == UserId ]
+    if len(Users) > 1:
+        raise LookupError
+    elif len(Users) == 1:
+        return Users[0]
+    else:
+        return None
+
+
+def get_farmbot_user(UserId: int):
+    Users = [ u for u in userconfig['farmbot_users'] if u['id'] == UserId ]
+    if len(Users) > 1:
+        raise LookupError
+    elif len(Users) == 1:
+        return Users[0]
+    else:
+        return None
+
+
+def test_farmbot_user_permission_level(DiscordUser, RequiredPermissionLevel):
+    FbUser = get_farmbot_user(DiscordUser.id)
+    if FbUser and FbUser['permission_level'] >= RequiredPermissionLevel:
+        return True
+    else:
+        return False
+
+
+@bot.slash_command(guild_ids=config['guilds'], description="Create farmbot user")
+@option(
+    "user",
+    str,
+    description="@Tagged user to create",
+    required=True
+)
+@option(
+    "permission_level",
+    int,
+    description="Permission level to be given to user, 0-15. 15 is full admin, 0 is banned.",
+    min_value=0,
+    max_value=15
+)
+async def createfarmbotuser(ctx, user: str, permission_level: int = 1):
+    RequiredPermissionLevel = 15
+    try:
+        PermissionTestResult = test_farmbot_user_permission_level(ctx.author, RequiredPermissionLevel)
+    except LookupError:
+        await ctx.respond("Permissions check failed: multiple users found. Aborting."); return
+    if PermissionTestResult != True:
+        await ctx.respond("Permission denied"); return
+    
+    try:
+        UserId = clean_tagged_user(user)
+    except ValueError:
+        await ctx.respond("Invalid request, please @tag a user"); return
+    
+    try:
+        DiscordUser = get_discord_user(ctx, UserId)
+    except LookupError:
+        await ctx.respond("Discord user lookup failed: multiple users found. Aborting."); return
+    if not DiscordUser:
+        await ctx.respond("Discord user not found, aborting."); return
+    
+    FbUser = get_farmbot_user(UserId)
+    if FbUser:
+        await ctx.respond(f"Farmbot user for {FbUser['name']} already exists, aborting."); return
+    
+    NewFbUser = {
+        'id': UserId,
+        'global_name': DiscordUser.global_name,
+        'name': DiscordUser.name,
+        'permission_level': permission_level
+    }
+    userconfig['farmbot_users'].append(NewFbUser)
+    write_userconfig()
+    await ctx.respond(f"Farmbot user created for {user} with permission level {NewFbUser['permission_level']} ")
+
+
+# @bot.slash_command(guild_ids=config['guilds'], description="Show farmbot user permission level")
+# async def showfarmbotuserpermissionlevel(ctx):
+#     UserPermissionLevel = get_farmbot_user_permission_level(ctx.author.id)
+#     await ctx.respond("Permission denied")
+#     await ctx.respond("Permission granted")
+
+
 async def autocomplete_list_stashes(ctx: discord.AutocompleteContext):
   return [ convert_stash_name_to_save_name(s.name) for s in get_stashes() ]
 
@@ -356,6 +467,17 @@ if 'notified_version' not in userconfig:
     userconfig['notified_version'] = ''
 if 'automatic_updates' not in userconfig:
     userconfig['automatic_updates'] = False
+if 'farmbot_users' not in userconfig:
+    userconfig['farmbot_users'] = []
+for Admin in config['farmbot_default_admin_discord_users']:
+    if not userconfig['farmbot_users'] or Admin['id'] not in [ u['id'] for u in userconfig['farmbot_users'] ]:
+        NewFbUser = {
+            'id': Admin['id'],
+            'global_name': Admin['global_name'],
+            'name': Admin['name'],
+            'permission_level': 15
+        }
+        userconfig['farmbot_users'].append(NewFbUser)
 
 write_userconfig()
 
