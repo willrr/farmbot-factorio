@@ -342,7 +342,7 @@ def get_farmbot_user(UserId: int):
 
 def get_farmbot_user_index(UserId: int):
     try:
-        Index = [ x.id for x in userconfig['farmbot_users'] ].index(UserId)
+        Index = [ x['id'] for x in userconfig['farmbot_users'] ].index(UserId)
     except ValueError:
         Index = -1
     return Index
