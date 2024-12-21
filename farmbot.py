@@ -391,20 +391,6 @@ async def uploadnewfactoriosave(ctx, save_file: discord.Attachment):
     await ctx.respond(f"File `{save_file.filename}` successfully uploaded to new stash `{NewStashName}`.")
 
 
-@bot.slash_command(guild_ids=config['guilds'], description="Show your discord user id")
-async def showdiscorduserid(ctx):
-    await ctx.respond(ctx.author.id)
-
-
-# @bot.slash_command(guild_ids=config['guilds'], description="Show user debug")
-# async def showuserdebug(ctx, user):
-#     if not re.match(r'^<@\d+>$', user):
-#         await ctx.respond(f"Invalid request, please @tag a user")
-#         return
-#     UserId = int(re.sub(r'[<>@]', '', user))
-#     await ctx.respond([ m.global_name for m in ctx.guild.members if m.id == UserId ])
-
-
 def clean_tagged_user(User):
     if not re.match(r'^<@\d+>$', User):
         raise ValueError
