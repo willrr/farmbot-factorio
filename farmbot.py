@@ -183,10 +183,6 @@ def activate_factorio_save(Stash):
     time.sleep(10)
 
 
-# def get_farmbot_user_permission_level(UserId):
-#     return userconfig['users'][UserId]['permission_level']
-
-
 @bot.event
 async def on_ready():
     print(f'We have logged in as {bot.user}')
