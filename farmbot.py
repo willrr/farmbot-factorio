@@ -463,6 +463,25 @@ async def editfarmbotuserpermissionlevel(ctx, user: str, permission_level: int):
     await ctx.respond(f"Farmbot user updated for {user} with permission level {userconfig['farmbot_users'][FbUserIndex]['permission_level']}")
 
 
+async def removefarmbotuser(ctx, user: str, permission_level: int):
+    RequiredPermissionLevel = 15
+    if test_farmbot_user_permission_level(ctx, RequiredPermissionLevel) != True:
+        return
+
+    try:
+        UserId = clean_tagged_user(user)
+    except ValueError:
+        await ctx.respond("Invalid request, please @tag a user"); return
+
+    FbUserIndex = get_farmbot_user_index(UserId)
+    if FbUserIndex == -1:
+        await ctx.respond(f"Farmbot user for {user} does not exist, aborting."); return
+
+    userconfig['farmbot_users'][FbUserIndex].remove()
+    write_userconfig()
+    await ctx.respond(f"Farmbot user removed for {user}")
+
+
 async def autocomplete_list_stashes(ctx: discord.AutocompleteContext):
   return [ convert_stash_name_to_save_name(s.name) for s in get_stashes() ]
 
