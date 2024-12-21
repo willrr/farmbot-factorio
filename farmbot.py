@@ -75,31 +75,31 @@ def status_factorio():
     return('\n'.join(StatusCleanList))
 
 
-def get_online_players():
+def get_factorio_online_players():
     FactorioClient = factorio_rcon.RCONClient("127.0.0.1", config['rcon_port'], config['rcon_password'])
     PlayersString = FactorioClient.send_command('/players online')
     return(PlayersString)
 
 
-def get_online_player_count():
+def get_factorio_online_player_count():
     FactorioClient = factorio_rcon.RCONClient("127.0.0.1", config['rcon_port'], config['rcon_password'])
     PlayerCountString = FactorioClient.send_command('/players online count')
     PlayerCount = int(re.match(r'^Online players \((\d+)\)', PlayerCountString).group(1))
     return(PlayerCount)
 
 
-def get_save_names(SavePath):
+def get_factorio_save_names(SavePath):
     Saves = list(SavePath.glob("*.zip"))
     return [ s for s in Saves if SaveFilter.match(s.name) ]
 
 
 SaveFilter = re.compile(r'^[A-Za-z0-9][A-Za-z0-9_ -]+.zip$')
-def get_current_save():
+def get_factorio_current_save():
     SavePath = Path(f"{config['factorio_path']}/saves")
-    return SavePath, get_save_names(SavePath)
+    return SavePath, get_factorio_save_names(SavePath)
 
 
-def get_stashes():
+def get_factorio_stashes():
     return [ s for s in Path(config['factorio_path']).glob("stash-*") if s.is_dir ]
 
 
@@ -123,9 +123,9 @@ def convert_save_name_to_stash_name(SaveName):
     return f"stash-{SaveName}"
 
 
-def create_stash(NewStashName):
+def create_factorio_stash(NewStashName):
     FactorioPath = Path(config['factorio_path'])
-    Stashes = get_stashes()
+    Stashes = get_factorio_stashes()
     if Stashes and NewStashName in [ s.name for s in Stashes ]:
         raise ValueError('Stash already exists')
     Path.mkdir(f"{FactorioPath}/{NewStashName}", mode=0o775, parents=False, exist_ok=False)
@@ -134,10 +134,10 @@ def create_stash(NewStashName):
     return NewStash
 
 
-def switch_saves(Stash):
+def activate_factorio_save(Stash):
     FactorioPath = Path(config['factorio_path'])
-    Stashes = get_stashes()
-    CurrentSavePath, CurrentSaveFiles = get_current_save()
+    Stashes = get_factorio_stashes()
+    CurrentSavePath, CurrentSaveFiles = get_factorio_current_save()
     CurrentSaveStashName = convert_filename_to_stash_name(CurrentSaveFiles[0].name)
     if Stashes and CurrentSaveStashName in [ s.name for s in Stashes ]:
         raise ValueError(f"Stash {CurrentSaveStashName} already exists")
@@ -197,7 +197,7 @@ async def updatefactorio(ctx):
     VersionInfo = get_factorio_versions()
     await ctx.respond(factorio_version_output(VersionInfo))
     if VersionInfo['update_required']:
-        OnlinePlayerCount = get_online_player_count()
+        OnlinePlayerCount = get_factorio_online_player_count()
         if OnlinePlayerCount == 0:
             await ctx.respond(restart_factorio())
             VersionInfo = get_factorio_versions()
@@ -258,12 +258,12 @@ async def disableautomaticupdates(ctx):
 
 @bot.slash_command(guild_ids=config['guilds'], description="Show online players")
 async def playersonline(ctx):
-    await ctx.respond(f"```\n{get_online_players()}\n```")
+    await ctx.respond(f"```\n{get_factorio_online_players()}\n```")
 
 
 def get_saves_output():
-    CurrentSaveName = convert_filename_to_save_name(get_current_save()[1][0].name)
-    StashedSaveNames = [ convert_stash_name_to_save_name(s.name) for s in get_stashes() ]
+    CurrentSaveName = convert_filename_to_save_name(get_factorio_current_save()[1][0].name)
+    StashedSaveNames = [ convert_stash_name_to_save_name(s.name) for s in get_factorio_stashes() ]
     return f"Current Save: `{CurrentSaveName}`\nStashed Saves:\n- `{'`\n- `'.join(StashedSaveNames)}`"
 
 
@@ -279,20 +279,20 @@ async def showsaves(ctx):
     description="Save file to import",
     required=True
 )
-async def uploadnewsave(ctx, save_file: discord.Attachment):
+async def uploadnewfactoriosave(ctx, save_file: discord.Attachment):
     if save_file.filename.__len__() > 128:
         ctx.respond(f"Filename is too long, aborting.\nMaximum permitted filename length is 128 characters.")
     if not SaveFilter.match(save_file.filename):
         await ctx.respond(f"Filename uses illegal characters, aborting.\nAllowed Characters are `A-Za-z0-9` for the first character, and `A-Za-z0-9_ -` for subsequent characters.")
-    if save_file.filename in [ s.name for s in get_current_save()[1] ]:
+    if save_file.filename in [ s.name for s in get_factorio_current_save()[1] ]:
         await ctx.respond(f"Filename in use by current save, aborting.")
         return
-    Stashes = get_stashes()
+    Stashes = get_factorio_stashes()
     NewStashName = convert_filename_to_stash_name(save_file.filename)
     if Stashes and NewStashName in [ s.name for s in Stashes ]:
         await ctx.respond(f"Stash for filename already exists, aborting.")
         return
-    NewStash = create_stash(NewStashName)
+    NewStash = create_factorio_stash(NewStashName)
     NewSavePath = f"{str(NewStash)}/{save_file.filename}"
     await save_file.save(NewSavePath)
     os.chmod(NewSavePath, 0o664)
@@ -484,7 +484,7 @@ async def removefarmbotuser(ctx, user: str, permission_level: int):
 
 
 async def autocomplete_list_stashes(ctx: discord.AutocompleteContext):
-  return [ convert_stash_name_to_save_name(s.name) for s in get_stashes() ]
+  return [ convert_stash_name_to_save_name(s.name) for s in get_factorio_stashes() ]
 
 
 @bot.slash_command(guild_ids=config['guilds'], description="Switch Save Files")
@@ -495,10 +495,10 @@ async def autocomplete_list_stashes(ctx: discord.AutocompleteContext):
     description="Save file to import",
     required=True
 )
-async def activatestashedsave(ctx,save: str):
+async def activatefactoriostashedsave(ctx,save: str):
     await ctx.respond(f"Switching to save `{save}`")
     SavePath = Path(f"{config['factorio_path']}/{convert_save_name_to_stash_name(save)}")
-    switch_saves(SavePath)
+    activate_factorio_save(SavePath)
     await ctx.respond(f"Switch Complete.\n```\n{status_factorio()}\n```\n{get_saves_output()}")
 
 
@@ -519,7 +519,7 @@ async def auto_update_check():
         write_userconfig()
         await send_notification(factorio_version_output(get_factorio_versions()))
     if VersionInfo['update_required'] and userconfig['automatic_updates']:
-        PlayerCount = get_online_player_count()
+        PlayerCount = get_factorio_online_player_count()
         if PlayerCount == 0:
             await send_notification(f"Starting update from version `{VersionInfo['current']}` to version `{VersionInfo['latest_stable']}`, there are 0 players on the server.")
             restart_factorio()
@@ -527,9 +527,9 @@ async def auto_update_check():
             await send_notification(f"```\nUpdate complete\n{status_factorio()}\n```")
 
         elif PlayerCount == 1:
-            await send_notification(f"Cannot update from version `{VersionInfo['current']}` to version `{VersionInfo['latest_stable']}`, there is 1 player on the server:\n```\n{get_online_players()}\n```")
+            await send_notification(f"Cannot update from version `{VersionInfo['current']}` to version `{VersionInfo['latest_stable']}`, there is 1 player on the server:\n```\n{get_factorio_online_players()}\n```")
         else: 
-            await send_notification(f"Cannot update from version `{VersionInfo['current']}` to version `{VersionInfo['latest_stable']}`, there are `{PlayerCount}` players on the server:\n```\n{get_online_players()}\n```")
+            await send_notification(f"Cannot update from version `{VersionInfo['current']}` to version `{VersionInfo['latest_stable']}`, there are `{PlayerCount}` players on the server:\n```\n{get_factorio_online_players()}\n```")
 
 
 global userconfig
