@@ -93,7 +93,7 @@ def get_factorio_save_names(SavePath):
     return [ s for s in Saves if SaveFilter.match(s.name) ]
 
 
-SaveFilter = re.compile(r'^[A-Za-z0-9][A-Za-z0-9_ -]+.zip$')
+SaveFilter = re.compile(r'^[A-Za-z0-9][A-Za-z0-9._ -]+.zip$')
 def get_factorio_current_save():
     SavePath = Path(f"{config['factorio_path']}/saves")
     return SavePath, get_factorio_save_names(SavePath)
@@ -281,12 +281,11 @@ async def showsaves(ctx):
 )
 async def uploadnewfactoriosave(ctx, save_file: discord.Attachment):
     if save_file.filename.__len__() > 128:
-        ctx.respond(f"Filename is too long, aborting.\nMaximum permitted filename length is 128 characters.")
+        await ctx.respond(f"Filename is too long, aborting.\nMaximum permitted filename length is 128 characters."); return
     if not SaveFilter.match(save_file.filename):
-        await ctx.respond(f"Filename uses illegal characters, aborting.\nAllowed Characters are `A-Za-z0-9` for the first character, and `A-Za-z0-9_ -` for subsequent characters.")
+        await ctx.respond(f"Filename uses illegal characters, aborting.\nAllowed Characters are `A-Za-z0-9` for the first character, and `A-Za-z0-9_ -` for subsequent characters."); return
     if save_file.filename in [ s.name for s in get_factorio_current_save()[1] ]:
-        await ctx.respond(f"Filename in use by current save, aborting.")
-        return
+        await ctx.respond(f"Filename in use by current save, aborting."); return
     Stashes = get_factorio_stashes()
     NewStashName = convert_filename_to_stash_name(save_file.filename)
     if Stashes and NewStashName in [ s.name for s in Stashes ]:
