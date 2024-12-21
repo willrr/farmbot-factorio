@@ -376,7 +376,7 @@ async def test_farmbot_user_permission_level(ctx, RequiredPermissionLevel):
 )
 async def createfarmbotuser(ctx, user: str, permission_level: int = 1):
     RequiredPermissionLevel = 15
-    if test_farmbot_user_permission_level(ctx, RequiredPermissionLevel) != True:
+    if await test_farmbot_user_permission_level(ctx, RequiredPermissionLevel) != True:
         return
 
     try:
@@ -437,7 +437,7 @@ async def showfarmbotuser(ctx):
 )
 async def editfarmbotuserpermissionlevel(ctx, user: str, permission_level: int):
     RequiredPermissionLevel = 15
-    if test_farmbot_user_permission_level(ctx, RequiredPermissionLevel) != True:
+    if await test_farmbot_user_permission_level(ctx, RequiredPermissionLevel) != True:
         return
 
     try:
@@ -465,7 +465,7 @@ async def editfarmbotuserpermissionlevel(ctx, user: str, permission_level: int):
 
 async def removefarmbotuser(ctx, user: str, permission_level: int):
     RequiredPermissionLevel = 15
-    if test_farmbot_user_permission_level(ctx, RequiredPermissionLevel) != True:
+    if await test_farmbot_user_permission_level(ctx, RequiredPermissionLevel) != True:
         return
 
     try:
