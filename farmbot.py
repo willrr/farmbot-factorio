@@ -416,8 +416,9 @@ async def createfarmbotuser(ctx, user: str, permission_level: int = 1):
 async def showfarmbotuser(ctx, user):
     FbUser = get_farmbot_user(clean_tagged_user(user))
     if FbUser:
-        json.dumps(FbUser, indent=2)
-    await ctx.respond(f"FarmBot user {user} not found")
+        await ctx.respond(f"```json\n{json.dumps(FbUser, indent=2)}\n```")
+    else:
+        await ctx.respond(f"FarmBot user {user} not found")
 
 
 @bot.slash_command(guild_ids=config['guilds'], description="Edit farmbot user permission level")
