@@ -12,7 +12,7 @@ bot = discord.Bot(intents=intents)
 
 def write_userconfig():
     with open('userconfig.json', 'w') as f:
-        json.dump(userconfig, f)
+        json.dump(userconfig, f, indent=2)
 
 
 def get_factorio_versions():
