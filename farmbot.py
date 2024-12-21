@@ -658,6 +658,56 @@ async def send_notification(string):
             print(f"Cannot send update notification to channel {Id} due to permissions")
 
 
+def set_factorio_server_name(ServerName: str):
+    with open('/opt/factorio/server-settings.json', "r+") as FactorioConfigFile:
+        FactorioConfig = FactorioConfigFile.read()
+        new_contents = re.sub(r'"name": ".+"', f'"name": "{ServerName}"', FactorioConfig)
+        FactorioConfigFile.seek(0)
+        FactorioConfigFile.truncate()
+        FactorioConfigFile.write(new_contents)
+
+@bot.slash_command(guild_ids=config['guilds'], description="Set the factorio server name")
+@option(
+    "servername",
+    str,
+    description="Server name",
+    required=True
+)
+async def setfactorioservername(ctx, servername: str):
+    RequiredPermissionLevel = 10
+    if await test_farmbot_user_permission_level(ctx, RequiredPermissionLevel) != True:
+        return
+    if not re.match(r'^[A-Za-z0-9._ -]{1,60}$', servername):
+        await ctx.respond(f"`{servername}` is not a valid server name")
+    set_factorio_server_name(servername)
+    await ctx.respond(f"Server name updated to `{servername}`. Restart server to take effect.")
+
+
+def set_factorio_server_description(ServerDescription: str):
+    with open('/opt/factorio/server-settings.json', "r+") as FactorioConfigFile:
+        FactorioConfig = FactorioConfigFile.read()
+        new_contents = re.sub(r'"description": ".*"', f'"description": "{ServerDescription}"', FactorioConfig)
+        FactorioConfigFile.seek(0)
+        FactorioConfigFile.truncate()
+        FactorioConfigFile.write(new_contents)
+
+@bot.slash_command(guild_ids=config['guilds'], description="Set the factorio server description")
+@option(
+    "serverdescription",
+    str,
+    description="Description name",
+    required=True
+)
+async def setfactorioserverdescription(ctx, serverdescription: str):
+    RequiredPermissionLevel = 10
+    if await test_farmbot_user_permission_level(ctx, RequiredPermissionLevel) != True:
+        return
+    if not re.match(r'^[A-Za-z0-9!._ -]{0,250}$', serverdescription):
+        await ctx.respond(f"`{serverdescription}` is not a valid server description")
+    set_factorio_server_description(serverdescription)
+    await ctx.respond(f"Server description updated to `{serverdescription}`. Restart server to take effect.")
+
+
 @tasks.loop(hours=1)
 async def auto_update_check():
     VersionInfo = get_factorio_versions()
