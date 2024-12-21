@@ -200,32 +200,50 @@ async def hello(ctx):
 
 @bot.slash_command(guild_ids=config['guilds'], description="Start Factorio server")
 async def startfactorio(ctx):
+    RequiredPermissionLevel = 1
+    if await test_farmbot_user_permission_level(ctx, RequiredPermissionLevel) != True:
+        return
     await ctx.respond(start_factorio())
 
 
 @bot.slash_command(guild_ids=config['guilds'], description="Stop Factorio server")
 async def stopfactorio(ctx):
+    RequiredPermissionLevel = 5
+    if await test_farmbot_user_permission_level(ctx, RequiredPermissionLevel) != True:
+        return
     await ctx.respond(stop_factorio())
 
 
 @bot.slash_command(guild_ids=config['guilds'], description="Restart Factorio server")
 async def restartfactorio(ctx):
+    RequiredPermissionLevel = 5
+    if await test_farmbot_user_permission_level(ctx, RequiredPermissionLevel) != True:
+        return
     await ctx.respond(restart_factorio())
 
 
 @bot.slash_command(guild_ids=config['guilds'], description="Show Factorio server status")
 async def statusfactorio(ctx):
+    RequiredPermissionLevel = 1
+    if await test_farmbot_user_permission_level(ctx, RequiredPermissionLevel) != True:
+        return
     await ctx.respond(f"```\n{status_factorio()}\n```")
 
 
 @bot.slash_command(guild_ids=config['guilds'], description="Check for Factorio updates")
 async def checkupdatefactorio(ctx):
+    RequiredPermissionLevel = 1
+    if await test_farmbot_user_permission_level(ctx, RequiredPermissionLevel) != True:
+        return
     VersionInfo = get_factorio_versions()
     await ctx.respond(factorio_version_output(VersionInfo))
 
 
 @bot.slash_command(guild_ids=config['guilds'], description="Update Factorio server")
 async def updatefactorio(ctx):
+    RequiredPermissionLevel = 1
+    if await test_farmbot_user_permission_level(ctx, RequiredPermissionLevel) != True:
+        return
     VersionInfo = get_factorio_versions()
     await ctx.respond(factorio_version_output(VersionInfo))
     if VersionInfo['update_required']:
@@ -240,6 +258,9 @@ async def updatefactorio(ctx):
 
 @bot.slash_command(guild_ids=config['guilds'], description="Enable channel update notifications")
 async def enableupdatenotifications(ctx):
+    RequiredPermissionLevel = 10
+    if await test_farmbot_user_permission_level(ctx, RequiredPermissionLevel) != True:
+        return
     if ctx.channel.id not in userconfig['notification_channels']:
         Channel = bot.get_channel(ctx.channel.id)
         if Channel.can_send:
@@ -254,6 +275,9 @@ async def enableupdatenotifications(ctx):
 
 @bot.slash_command(guild_ids=config['guilds'], description="Disable channel update notifications")
 async def disableupdatenotifications(ctx):
+    RequiredPermissionLevel = 10
+    if await test_farmbot_user_permission_level(ctx, RequiredPermissionLevel) != True:
+        return
     if ctx.channel.id in userconfig['notification_channels']:
         if userconfig['automatic_updates'] and len(userconfig['notification_channels']) == 1:
             await ctx.respond("Automatic updates are enabled, and no other channels have notifications enabled. Please disable automatic updates first, or enable notifications on a different channel.")
@@ -267,6 +291,9 @@ async def disableupdatenotifications(ctx):
 
 @bot.slash_command(guild_ids=config['guilds'], description="Enable automatic updates")
 async def enableautomaticupdates(ctx):
+    RequiredPermissionLevel = 10
+    if await test_farmbot_user_permission_level(ctx, RequiredPermissionLevel) != True:
+        return
     if len(userconfig['notification_channels']) == 0:
         await ctx.respond("No update notification channels have been set, please enable update notifications first")
         return()
@@ -280,6 +307,9 @@ async def enableautomaticupdates(ctx):
 
 @bot.slash_command(guild_ids=config['guilds'], description="Disable automatic updates")
 async def disableautomaticupdates(ctx):
+    RequiredPermissionLevel = 10
+    if await test_farmbot_user_permission_level(ctx, RequiredPermissionLevel) != True:
+        return
     if userconfig['automatic_updates']:
         userconfig['automatic_updates'] = False
         write_userconfig()
@@ -290,6 +320,9 @@ async def disableautomaticupdates(ctx):
 
 @bot.slash_command(guild_ids=config['guilds'], description="Show online players")
 async def playersonline(ctx):
+    RequiredPermissionLevel = 1
+    if await test_farmbot_user_permission_level(ctx, RequiredPermissionLevel) != True:
+        return
     await ctx.respond(f"```\n{get_factorio_online_players()}\n```")
 
 
@@ -326,12 +359,15 @@ async def registerfactoriousername(ctx, username):
 
 @bot.slash_command(guild_ids=config['guilds'], description="Show factorio server whitelist")
 async def showfactoriowhitelist(ctx):
+    RequiredPermissionLevel = 1
+    if await test_farmbot_user_permission_level(ctx, RequiredPermissionLevel) != True:
+        return
     await ctx.respond(f"```\n{get_factorio_whitelist()}\n```")
 
 
 @bot.slash_command(guild_ids=config['guilds'], description="Add user to factorio server whitelist")
 async def addfactoriowhitelistuser(ctx, username):
-    RequiredPermissionLevel = 10
+    RequiredPermissionLevel = 5
     if await test_farmbot_user_permission_level(ctx, RequiredPermissionLevel) != True:
         return
     
@@ -343,7 +379,7 @@ async def addfactoriowhitelistuser(ctx, username):
 
 @bot.slash_command(guild_ids=config['guilds'], description="Remove user from factorio server whitelist")
 async def removefactoriowhitelistuser(ctx, username):
-    RequiredPermissionLevel = 10
+    RequiredPermissionLevel = 5
     if await test_farmbot_user_permission_level(ctx, RequiredPermissionLevel) != True:
         return
 
@@ -361,6 +397,9 @@ def get_saves_output():
 
 @bot.slash_command(guild_ids=config['guilds'], description="Show saves")
 async def showsaves(ctx):
+    RequiredPermissionLevel = 5
+    if await test_farmbot_user_permission_level(ctx, RequiredPermissionLevel) != True:
+        return
     await ctx.respond(get_saves_output())
 
 
@@ -372,6 +411,9 @@ async def showsaves(ctx):
     required=True
 )
 async def uploadnewfactoriosave(ctx, save_file: discord.Attachment):
+    RequiredPermissionLevel = 10
+    if await test_farmbot_user_permission_level(ctx, RequiredPermissionLevel) != True:
+        return
     if save_file.filename.__len__() > 128:
         await ctx.respond(f"Filename is too long, aborting.\nMaximum permitted filename length is 128 characters."); return
     if not SaveFilter.match(save_file.filename):
@@ -491,11 +533,29 @@ async def createfarmbotuser(ctx, user: str, permission_level: int = 1):
     required=True
 )
 async def showfarmbotuser(ctx, user):
+    RequiredPermissionLevel = 10
+    if await test_farmbot_user_permission_level(ctx, RequiredPermissionLevel) != True:
+        return
     FbUser = get_farmbot_user(clean_tagged_user(user))
     if FbUser:
         await ctx.respond(f"```json\n{json.dumps(FbUser, indent=2)}\n```")
     else:
         await ctx.respond(f"FarmBot user for {user} not found")
+
+
+@bot.slash_command(guild_ids=config['guilds'], description="Show farmbot user permission level")
+@option(
+    "user",
+    str,
+    description="@Tagged user to create",
+    required=True
+)
+async def showmyfarmbotuser(ctx):
+    FbUser = get_farmbot_user(ctx.author.id)
+    if FbUser:
+        await ctx.respond(f"```json\n{json.dumps(FbUser, indent=2)}\n```")
+    else:
+        await ctx.respond(f"FarmBot user for {ctx.author.name} not found")
 
 
 @bot.slash_command(guild_ids=config['guilds'], description="Edit farmbot user permission level")
@@ -573,6 +633,9 @@ async def autocomplete_list_stashes(ctx: discord.AutocompleteContext):
     required=True
 )
 async def activatefactoriostashedsave(ctx,save: str):
+    RequiredPermissionLevel = 10
+    if await test_farmbot_user_permission_level(ctx, RequiredPermissionLevel) != True:
+        return
     await ctx.respond(f"Switching to save `{save}`")
     SavePath = Path(f"{config['factorio_path']}/{convert_save_name_to_stash_name(save)}")
     activate_factorio_save(SavePath)
