@@ -340,11 +340,23 @@ def get_farmbot_user(UserId: int):
         return None
 
 
-def test_farmbot_user_permission_level(DiscordUser, RequiredPermissionLevel):
-    FbUser = get_farmbot_user(DiscordUser.id)
+def get_farmbot_user_index(UserId: int):
+    try:
+        Index = [ x.id for x in userconfig['farmbot_users'] ].index(UserId)
+    except ValueError:
+        Index = -1
+    return Index
+
+
+async def test_farmbot_user_permission_level(ctx, RequiredPermissionLevel):
+    try:
+        FbUser = get_farmbot_user(ctx.author.id)
+    except LookupError:
+        await ctx.respond("Permissions check failed: multiple users found. Aborting."); return
     if FbUser and FbUser['permission_level'] >= RequiredPermissionLevel:
         return True
     else:
+        await ctx.respond("Permission denied")
         return False
 
 
@@ -364,29 +376,25 @@ def test_farmbot_user_permission_level(DiscordUser, RequiredPermissionLevel):
 )
 async def createfarmbotuser(ctx, user: str, permission_level: int = 1):
     RequiredPermissionLevel = 15
-    try:
-        PermissionTestResult = test_farmbot_user_permission_level(ctx.author, RequiredPermissionLevel)
-    except LookupError:
-        await ctx.respond("Permissions check failed: multiple users found. Aborting."); return
-    if PermissionTestResult != True:
-        await ctx.respond("Permission denied"); return
-    
+    if test_farmbot_user_permission_level(ctx, RequiredPermissionLevel) != True:
+        return
+
     try:
         UserId = clean_tagged_user(user)
     except ValueError:
         await ctx.respond("Invalid request, please @tag a user"); return
-    
+
     try:
         DiscordUser = get_discord_user(ctx, UserId)
     except LookupError:
         await ctx.respond("Discord user lookup failed: multiple users found. Aborting."); return
     if not DiscordUser:
         await ctx.respond("Discord user not found, aborting."); return
-    
+
     FbUser = get_farmbot_user(UserId)
     if FbUser:
         await ctx.respond(f"Farmbot user for {FbUser['name']} already exists, aborting."); return
-    
+
     NewFbUser = {
         'id': UserId,
         'global_name': DiscordUser.global_name,
@@ -395,7 +403,7 @@ async def createfarmbotuser(ctx, user: str, permission_level: int = 1):
     }
     userconfig['farmbot_users'].append(NewFbUser)
     write_userconfig()
-    await ctx.respond(f"Farmbot user created for {user} with permission level {NewFbUser['permission_level']} ")
+    await ctx.respond(f"Farmbot user created for {user} with permission level {NewFbUser['permission_level']}")
 
 
 # @bot.slash_command(guild_ids=config['guilds'], description="Show farmbot user permission level")
