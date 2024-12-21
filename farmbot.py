@@ -418,7 +418,7 @@ async def showfarmbotuser(ctx, user):
     if FbUser:
         await ctx.respond(f"```json\n{json.dumps(FbUser, indent=2)}\n```")
     else:
-        await ctx.respond(f"FarmBot user {user} not found")
+        await ctx.respond(f"FarmBot user for {user} not found")
 
 
 @bot.slash_command(guild_ids=config['guilds'], description="Edit farmbot user permission level")
