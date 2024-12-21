@@ -341,6 +341,8 @@ async def registerfarmbotuser(ctx):
 
 @bot.slash_command(guild_ids=config['guilds'], description="Show factorio server whitelist")
 async def registerfactoriousername(ctx, username):
+    if not re.match(r'^[a-z0-9._-]{1,60}$', username):
+        await ctx.respond(f"{username} is not a valid factorio username")
     RequiredPermissionLevel = 1
     if await test_farmbot_user_permission_level(ctx, RequiredPermissionLevel) != True:
         return
