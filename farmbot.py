@@ -88,6 +88,38 @@ def get_factorio_online_player_count():
     return(PlayerCount)
 
 
+def get_factorio_whitelist():
+    FactorioClient = factorio_rcon.RCONClient("127.0.0.1", config['rcon_port'], config['rcon_password'])
+    WhiteListString = FactorioClient.send_command('/whitelist get')
+    return WhiteListString
+
+
+def get_factorio_whitelist_names():
+    WhiteListString = get_factorio_whitelist()
+    PlayerNames = re.split(r', | and ', re.sub(r'^Whitelisted players: ', '', WhiteListString))
+    return PlayerNames
+
+
+def test_factorio_user_in_whitelist(User: str):
+    PlayerNames = get_factorio_whitelist_names()
+    if User in PlayerNames:
+        return True
+    else:
+        return False
+
+
+def add_factorio_whitelist_user(User: str):
+    FactorioClient = factorio_rcon.RCONClient("127.0.0.1", config['rcon_port'], config['rcon_password'])
+    Response = FactorioClient.send_command(f"/whitelist add {User}")
+    return Response
+
+
+def remove_factorio_whitelist_user(User: str):
+    FactorioClient = factorio_rcon.RCONClient("127.0.0.1", config['rcon_port'], config['rcon_password'])
+    Response = FactorioClient.send_command(f"/whitelist remove {User}")
+    return Response
+
+
 def get_factorio_save_names(SavePath):
     Saves = list(SavePath.glob("*.zip"))
     return [ s for s in Saves if SaveFilter.match(s.name) ]
@@ -259,6 +291,66 @@ async def disableautomaticupdates(ctx):
 @bot.slash_command(guild_ids=config['guilds'], description="Show online players")
 async def playersonline(ctx):
     await ctx.respond(f"```\n{get_factorio_online_players()}\n```")
+
+
+@bot.slash_command(guild_ids=config['guilds'], description="Show factorio server whitelist")
+async def registerfarmbotuser(ctx):
+    FbUser = get_farmbot_user(ctx.author.id)
+    if FbUser:
+        await ctx.respond(f"Farmbot user for {FbUser['name']} already exists, aborting."); return
+
+    NewFbUser = {
+        'id': ctx.author.id,
+        'global_name': ctx.author.global_name,
+        'name': ctx.author.name,
+        'permission_level': 1
+    }
+    userconfig['farmbot_users'].append(NewFbUser)
+    write_userconfig()
+    await ctx.respond(f"Farmbot user created for {ctx.author.name} with permission level 1")
+
+
+@bot.slash_command(guild_ids=config['guilds'], description="Show factorio server whitelist")
+async def registerfactoriousername(ctx, username):
+    RequiredPermissionLevel = 1
+    if await test_farmbot_user_permission_level(ctx, RequiredPermissionLevel) != True:
+        return
+    FbUserIndex = get_farmbot_user_index(ctx.author.id)
+    userconfig['farmbot_users'][FbUserIndex]['factorio_username'] = username
+    await ctx.respond(f"Factorio username set")
+    if not test_factorio_user_in_whitelist(username):
+        await ctx.respond(f"```\n{add_factorio_whitelist_user(username)}\n```")
+    else:
+        await ctx.respond(f"Factorio username {username} already in whitelist.")
+
+
+@bot.slash_command(guild_ids=config['guilds'], description="Show factorio server whitelist")
+async def showfactoriowhitelist(ctx):
+    await ctx.respond(f"```\n{get_factorio_whitelist()}\n```")
+
+
+@bot.slash_command(guild_ids=config['guilds'], description="Add user to factorio server whitelist")
+async def addfactoriowhitelistuser(ctx, username):
+    RequiredPermissionLevel = 10
+    if await test_farmbot_user_permission_level(ctx, RequiredPermissionLevel) != True:
+        return
+    
+    if not test_factorio_user_in_whitelist(username):
+        await ctx.respond(f"```\n{add_factorio_whitelist_user(username)}\n```")
+    else:
+        await ctx.respond(f"User {username} already exists in whitelist")
+
+
+@bot.slash_command(guild_ids=config['guilds'], description="Remove user from factorio server whitelist")
+async def removefactoriowhitelistuser(ctx, username):
+    RequiredPermissionLevel = 10
+    if await test_farmbot_user_permission_level(ctx, RequiredPermissionLevel) != True:
+        return
+
+    if test_factorio_user_in_whitelist(username):
+        await ctx.respond(f"```\n{add_factorio_whitelist_user(username)}\n```")
+    else:
+        await ctx.respond(f"User {username} not in whitelist")
 
 
 def get_saves_output():
