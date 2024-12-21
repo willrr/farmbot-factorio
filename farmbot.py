@@ -201,6 +201,7 @@ async def startfactorio(ctx):
         return
     await ctx.respond("Starting Factorio")
     start_factorio()
+    time.sleep(10)
     await ctx.respond(f"```\n{status_factorio()}\n```")
 
 
@@ -211,6 +212,7 @@ async def stopfactorio(ctx):
         return
     await ctx.respond("Stopping Factorio")
     stop_factorio()
+    time.sleep(1)
     await ctx.respond(f"```\n{status_factorio()}\n```")
 
 
@@ -221,6 +223,7 @@ async def restartfactorio(ctx):
         return
     await ctx.respond("Restarting Factorio")
     restart_factorio()
+    time.sleep(10)
     await ctx.respond(f"```\n{status_factorio()}\n```")
 
 
