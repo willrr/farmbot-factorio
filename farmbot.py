@@ -524,7 +524,7 @@ async def auto_update_check():
             await send_notification(f"Starting update from version `{VersionInfo['current']}` to version `{VersionInfo['latest_stable']}`, there are 0 players on the server.")
             restart_factorio()
             time.sleep(10)
-            await send_notification(f"```\nUpdate complete\n{status_factorio()}\n```")
+            await send_notification(f"Update complete\n{factorio_version_output(get_factorio_versions())}\n```\n{status_factorio()}\n```")
 
         elif PlayerCount == 1:
             await send_notification(f"Cannot update from version `{VersionInfo['current']}` to version `{VersionInfo['latest_stable']}`, there is 1 player on the server:\n```\n{get_factorio_online_players()}\n```")
