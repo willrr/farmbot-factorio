@@ -577,7 +577,7 @@ async def showmyfarmbotuser(ctx):
     max_value=15,
     required=True
 )
-async def editfarmbotuserpermissionlevel(ctx, user: str, permission_level: int):
+async def setfarmbotuserpermissionlevel(ctx, user: str, permission_level: int):
     RequiredPermissionLevel = 15
     if await test_farmbot_user_permission_level(ctx, RequiredPermissionLevel) != True:
         return
