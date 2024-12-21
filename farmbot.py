@@ -406,11 +406,61 @@ async def createfarmbotuser(ctx, user: str, permission_level: int = 1):
     await ctx.respond(f"Farmbot user created for {user} with permission level {NewFbUser['permission_level']}")
 
 
-# @bot.slash_command(guild_ids=config['guilds'], description="Show farmbot user permission level")
-# async def showfarmbotuserpermissionlevel(ctx):
-#     UserPermissionLevel = get_farmbot_user_permission_level(ctx.author.id)
-#     await ctx.respond("Permission denied")
-#     await ctx.respond("Permission granted")
+@bot.slash_command(guild_ids=config['guilds'], description="Show farmbot user permission level")
+@option(
+    "user",
+    str,
+    description="@Tagged user to create",
+    required=True
+)
+async def showfarmbotuser(ctx):
+    FbUser = get_farmbot_user(ctx.author.id)
+    if FbUser:
+        await ctx.respond("Permission denied")
+    await ctx.respond("FarmBot user not found")
+
+
+@bot.slash_command(guild_ids=config['guilds'], description="Edit farmbot user permission level")
+@option(
+    "user",
+    str,
+    description="@Tagged user to edit",
+    required=True
+)
+@option(
+    "permission_level",
+    int,
+    description="Permission level to be given to user, 0-15. 15 is full admin, 0 is banned.",
+    min_value=0,
+    max_value=15,
+    required=True
+)
+async def editfarmbotuserpermissionlevel(ctx, user: str, permission_level: int):
+    RequiredPermissionLevel = 15
+    if test_farmbot_user_permission_level(ctx, RequiredPermissionLevel) != True:
+        return
+
+    try:
+        UserId = clean_tagged_user(user)
+    except ValueError:
+        await ctx.respond("Invalid request, please @tag a user"); return
+
+    try:
+        DiscordUser = get_discord_user(ctx, UserId)
+    except LookupError:
+        await ctx.respond("Discord user lookup failed: multiple users found. Aborting."); return
+    if not DiscordUser:
+        await ctx.respond("Discord user not found, aborting."); return
+
+    FbUserIndex = get_farmbot_user_index(UserId)
+    if FbUserIndex == -1:
+        await ctx.respond(f"Farmbot user for {user} does not exist, aborting."); return
+
+    userconfig['farmbot_users'][FbUserIndex]['global_name'] = DiscordUser.global_name
+    userconfig['farmbot_users'][FbUserIndex]['name'] = DiscordUser.name
+    userconfig['farmbot_users'][FbUserIndex]['permission_level'] = permission_level
+    write_userconfig()
+    await ctx.respond(f"Farmbot user updated for {user} with permission level {userconfig['farmbot_users'][FbUserIndex]['permission_level']}")
 
 
 async def autocomplete_list_stashes(ctx: discord.AutocompleteContext):
