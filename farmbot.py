@@ -196,10 +196,12 @@ async def hello(ctx):
 
 @bot.slash_command(guild_ids=config['guilds'], description="Start Factorio server")
 async def startfactorio(ctx):
-    RequiredPermissionLevel = 1
+    RequiredPermissionLevel = 5
     if await test_farmbot_user_permission_level(ctx, RequiredPermissionLevel) != True:
         return
-    await ctx.respond(start_factorio())
+    await ctx.respond("Starting Factorio")
+    start_factorio()
+    await ctx.respond(f"```\n{status_factorio()}\n```")
 
 
 @bot.slash_command(guild_ids=config['guilds'], description="Stop Factorio server")
@@ -207,7 +209,9 @@ async def stopfactorio(ctx):
     RequiredPermissionLevel = 5
     if await test_farmbot_user_permission_level(ctx, RequiredPermissionLevel) != True:
         return
-    await ctx.respond(stop_factorio())
+    await ctx.respond("Stopping Factorio")
+    stop_factorio()
+    await ctx.respond(f"```\n{status_factorio()}\n```")
 
 
 @bot.slash_command(guild_ids=config['guilds'], description="Restart Factorio server")
@@ -215,7 +219,9 @@ async def restartfactorio(ctx):
     RequiredPermissionLevel = 5
     if await test_farmbot_user_permission_level(ctx, RequiredPermissionLevel) != True:
         return
-    await ctx.respond(restart_factorio())
+    await ctx.respond("Restarting Factorio")
+    restart_factorio()
+    await ctx.respond(f"```\n{status_factorio()}\n```")
 
 
 @bot.slash_command(guild_ids=config['guilds'], description="Show Factorio server status")
@@ -245,7 +251,7 @@ async def updatefactorio(ctx):
     if VersionInfo['update_required']:
         OnlinePlayerCount = get_factorio_online_player_count()
         if OnlinePlayerCount == 0:
-            await ctx.respond(restart_factorio())
+            restart_factorio()
             VersionInfo = get_factorio_versions()
             await ctx.respond(factorio_version_output(VersionInfo))
         else:
@@ -322,7 +328,7 @@ async def playersonline(ctx):
     await ctx.respond(f"```\n{get_factorio_online_players()}\n```")
 
 
-@bot.slash_command(guild_ids=config['guilds'], description="Show factorio server whitelist")
+@bot.slash_command(guild_ids=config['guilds'], description="Register a farmbot user for yourself")
 async def registerfarmbotuser(ctx):
     FbUser = get_farmbot_user(ctx.author.id)
     if FbUser:
@@ -339,10 +345,10 @@ async def registerfarmbotuser(ctx):
     await ctx.respond(f"Farmbot user created for {ctx.author.name} with permission level 1")
 
 
-@bot.slash_command(guild_ids=config['guilds'], description="Show factorio server whitelist")
+@bot.slash_command(guild_ids=config['guilds'], description="Register your factorio username to your farmbot user, and add yourself to the whitelist")
 async def registerfactoriousername(ctx, username):
-    if not re.match(r'^[a-z0-9._-]{1,60}$', username):
-        await ctx.respond(f"{username} is not a valid factorio username")
+    if not re.match(r'^[A-Za-z0-9._-]{1,60}$', username):
+        await ctx.respond(f"{username} is not a valid factorio username"); return
     RequiredPermissionLevel = 1
     if await test_farmbot_user_permission_level(ctx, RequiredPermissionLevel) != True:
         return
