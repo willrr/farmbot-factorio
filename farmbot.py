@@ -163,6 +163,7 @@ def create_factorio_stash(NewStashName):
     Path.mkdir(f"{FactorioPath}/{NewStashName}", mode=0o775, parents=False, exist_ok=False)
     NewStash = Path(f"{FactorioPath}/{NewStashName}")
     shutil.chown(NewStash, group="factorio")
+    Path.chmod(NewStash, mode=0o775)
     return NewStash
 
 
