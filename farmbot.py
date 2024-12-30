@@ -1,4 +1,5 @@
 import discord, factorio_rcon, json, os, re, shutil, subprocess, sys, time, urllib.request
+from anyio import open_file, run
 from discord import option
 from discord.ext import tasks
 from pathlib import Path
@@ -190,10 +191,31 @@ def activate_factorio_save(Stash):
     time.sleep(10)
 
 
+global ConsoleLogPosition
+ConsoleLogPosition = -1
+async def read_factorio_console_log():
+    global ConsoleLogPosition
+    if ConsoleLogPosition == os.stat('/opt/factorio/factorio-console.log').st_size:
+        return None
+    elif ConsoleLogPosition > os.stat('/opt/factorio/factorio-console.log').st_size:
+        ConsoleLogPosition = 0
+    Output = ''
+    async with await open_file('/opt/factorio/factorio-console.log') as f:
+        if ConsoleLogPosition == -1:
+            await f.seek(0, 2)
+        else:
+            await f.seek(ConsoleLogPosition, 0)
+        async for line in f:
+            Output = Output + line
+        ConsoleLogPosition = await f.tell()
+    return Output.split('\n')
+
+
 @bot.event
 async def on_ready():
     print(f'We have logged in as {bot.user}')
-    await auto_update_check.start()
+    factorio_presence_check.start()
+    auto_update_check.start()
 
 
 @bot.slash_command(guild_ids=config['guilds'], description="test command")
@@ -380,6 +402,60 @@ async def registerfactoriousername(ctx, username):
         await ctx.respond(f"Factorio username {username} already in whitelist.")
 
 
+def get_factorio_username(FbUserIndex):
+    if 'factorio_username' not in userconfig['farmbot_users'][FbUserIndex]:
+        return ''
+    else:
+        return userconfig['farmbot_users'][FbUserIndex]['factorio_username']
+
+
+def get_factorio_presence_state(FbUserIndex):
+    if 'factorio_presence' in userconfig['farmbot_users'][FbUserIndex] and userconfig['farmbot_users'][FbUserIndex]['factorio_presence']:
+        return True
+    else:
+        return False
+
+
+@bot.slash_command(guild_ids=config['guilds'], description="Enable notifications of when you join and leave the server.")
+async def enablefactoriopresence(ctx):
+    RequiredPermissionLevel = 1
+    if await test_farmbot_user_permission_level(ctx, RequiredPermissionLevel) != True:
+        return
+    FbUserIndex = get_farmbot_user_index(ctx.author.id)
+    if FbUserIndex < 0:
+        await ctx.respond(f"Farmbot user not found, please register first."); return
+    FactorioUsername = get_factorio_username(FbUserIndex)
+    if not FactorioUsername:
+        await ctx.respond(f"Factorio username not set, please register it first."); return
+    if get_factorio_presence_state(FbUserIndex):
+        await ctx.respond(f"Presence notifications were already enabled for user `{FactorioUsername}`."); return
+    else:
+        userconfig['farmbot_users'][FbUserIndex]['factorio_presence'] = True
+        write_userconfig()
+        await ctx.respond(f"Presence notifications enabled for user `{FactorioUsername}`.")
+        return
+
+
+@bot.slash_command(guild_ids=config['guilds'], description="Disable notifications of when you join and leave the server.")
+async def disablefactoriopresence(ctx):
+    RequiredPermissionLevel = 1
+    if await test_farmbot_user_permission_level(ctx, RequiredPermissionLevel) != True:
+        return
+    FbUserIndex = get_farmbot_user_index(ctx.author.id)
+    if FbUserIndex < 0:
+        await ctx.respond(f"Farmbot user not found, please register first."); return
+    FactorioUsername = get_factorio_username(FbUserIndex)
+    if not FactorioUsername:
+        await ctx.respond(f"Factorio username not set, please register it first."); return
+    if not get_factorio_presence_state(FbUserIndex):
+        await ctx.respond(f"Presence notifications were already disabled for user `{FactorioUsername}`."); return
+    else:
+        userconfig['farmbot_users'][FbUserIndex]['factorio_presence'] = False
+        write_userconfig()
+        await ctx.respond(f"Presence notifications disabled for user `{FactorioUsername}`.")
+        return
+
+
 @bot.slash_command(guild_ids=config['guilds'], description="Show factorio server whitelist")
 async def showfactoriowhitelist(ctx):
     RequiredPermissionLevel = 1
@@ -485,6 +561,17 @@ def get_farmbot_user(UserId: int):
 def get_farmbot_user_index(UserId: int):
     try:
         Index = [ x['id'] for x in userconfig['farmbot_users'] ].index(UserId)
+    except ValueError:
+        Index = -1
+    return Index
+
+
+def get_farmbot_user_index_by_factorio_username(Username: str):
+    FbUsers = [u for u in userconfig['farmbot_users'] if 'factorio_username' in u and u['factorio_username'] == Username]
+    if len(FbUsers) != 1:
+        return -1
+    try:
+        Index = [ x['id'] for x in userconfig['farmbot_users'] ].index(FbUsers[0]['id'])
     except ValueError:
         Index = -1
     return Index
@@ -723,6 +810,18 @@ async def setfactorioserverdescription(ctx, serverdescription: str):
         await ctx.respond(f"`{serverdescription}` is not a valid server description")
     set_factorio_server_description(serverdescription)
     await ctx.respond(f"Server description updated to `{serverdescription}`. Restart server to take effect.")
+
+
+PresenceRegex = re.compile(r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \[(JOIN|LEAVE)\] ([A-Za-z0-9._-]{1,60}) ')
+@tasks.loop(seconds=10)
+async def factorio_presence_check():
+    PresenceUsernames = [u['factorio_username'] for u in userconfig['farmbot_users'] if 'factorio_username' in u and 'factorio_presence' in u and u['factorio_presence']]
+    LogLines = await read_factorio_console_log()
+    if LogLines:
+        for Line in LogLines:
+            Match = re.match(PresenceRegex, Line)
+            if Match and Match.groups()[1] in PresenceUsernames:
+                await send_notification(f"```\n{Line}\n```")
 
 
 @tasks.loop(hours=1)
