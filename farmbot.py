@@ -88,6 +88,12 @@ def get_factorio_online_player_count():
     return(PlayerCount)
 
 
+def get_factorio_time():
+    FactorioClient = factorio_rcon.RCONClient("127.0.0.1", config['rcon_port'], config['rcon_password'])
+    TimeString = FactorioClient.send_command('/time')
+    return(TimeString)
+
+
 def get_factorio_whitelist():
     FactorioClient = factorio_rcon.RCONClient("127.0.0.1", config['rcon_port'], config['rcon_password'])
     WhiteListString = FactorioClient.send_command('/whitelist get')
@@ -330,6 +336,14 @@ async def playersonline(ctx):
     if await test_farmbot_user_permission_level(ctx, RequiredPermissionLevel) != True:
         return
     await ctx.respond(f"```\n{get_factorio_online_players()}\n```")
+
+
+@bot.slash_command(guild_ids=config['guilds'], description="Show time elapsed in current game")
+async def showfactoriotime(ctx):
+    RequiredPermissionLevel = 1
+    if await test_farmbot_user_permission_level(ctx, RequiredPermissionLevel) != True:
+        return
+    await ctx.respond(f"```\n{get_factorio_time()}\n```")
 
 
 @bot.slash_command(guild_ids=config['guilds'], description="Register a farmbot user for yourself")
