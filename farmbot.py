@@ -372,6 +372,7 @@ async def registerfactoriousername(ctx, username):
         return
     FbUserIndex = get_farmbot_user_index(ctx.author.id)
     userconfig['farmbot_users'][FbUserIndex]['factorio_username'] = username
+    write_userconfig()
     await ctx.respond(f"Factorio username set")
     if not test_factorio_user_in_whitelist(username):
         await ctx.respond(f"```\n{add_factorio_whitelist_user(username)}\n```")
