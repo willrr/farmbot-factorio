@@ -707,6 +707,7 @@ def set_factorio_server_description(ServerDescription: str):
         FactorioConfigFile.truncate()
         FactorioConfigFile.write(new_contents)
 
+
 @bot.slash_command(guild_ids=config['guilds'], description="Set the factorio server description")
 @option(
     "serverdescription",
