@@ -34,3 +34,7 @@ This is not an exhaustive list of all commands, but a few base features:
   - Ask user to run `/registerfactoriousername` to add their factorio username to their farmbot user, and add it to the ingame whitelist.
 - Adjusting a user's permission level
   - Once a user has registered, use `/setfarmbotuserpermissionlevel`
+
+## Possible future features:
+- Mod management
+- Switching between Factorio update channels (stable / experimental)
