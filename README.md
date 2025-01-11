@@ -2,7 +2,7 @@
 
 Farmbot Factorio is a discord bot for managing a Factorio server. It utilises pycord for discord interaction, factorio_rcon to talk to the factorio process, and the public factorio API for checking version information.
 
-Features:
+## Features:
 - Service management with systemd, including example systemd service files.
 - Automatic updating of the code (checks to see if anyone is currently on the server first).
 - Executing some in-game commands and returning output to Discord.
@@ -10,7 +10,7 @@ Features:
 - A JSON configuration file that can store basic user data, and provide a link between ingame users and discord users.
 - A basic permissions system to control who can run which discord command. It supports a range of 0-15, where 0 is no permissions and 15 is full admin.
 
-Installation:
+## Installation:
 - Create a linux service user for `factorio`.
 - Create a linux service user for `farmbot-factorio`, adding to the `factorio` group (required for updating to work).
 - Download and extract factorio to `/opt/factorio`, ensuring that the `factorio` user and group are the owners.
@@ -21,7 +21,7 @@ Installation:
 - Use the `factorio.sudoers.example` file to allow `farmbot-factorio` service permissions via sudo.
 - User the `update.example.py` file to create an `update.py` file. This is executed as part of systemd starting the service.
 
-Use:
+## Use:
 This is not an exhaustive list of all commands, but a few base features:
 - Enabling automatic updates:
   - Run `/enableupdatenotifications` in a channel that you want the update notifications to be posted in.
