@@ -1,6 +1,6 @@
 # Farmbot-Factorio
 
-Farmbot Factorio is a discord bot for managing a Factorio server. It utilises pycord for discord interaction, factorio_rcon to talk to the factorio process, and the public factorio API for checking version information.
+Farmbot Factorio is a discord bot for managing a Factorio server. It utilises pycord for discord interaction, factorio_rcon to talk to the factorio process, and the public factorio API for checking version information. It is developed and tested on Ubuntu 24.04, but should be easy to adapt to other operating systems that utilise systemd.
 
 ## Features:
 - Service management with systemd, including example systemd service files.
@@ -21,7 +21,7 @@ Farmbot Factorio is a discord bot for managing a Factorio server. It utilises py
 - Use the `factorio.example.service` file to install factorio as a service within systemd (`/etc/systemd/system/factorio.service`). Also remember to set the rcon password to match what is in your `config.json` file.
 - Use the `farmbot-factorio.example.service` file to install farmbot-factorio as a service within systemd (`/etc/systemd/system/farmbot-factorio.service`)
 - Use the `factorio.sudoers.example` file to allow `farmbot-factorio` service permissions via sudo. (`/etc/sudoers.d/factorio`)
-- User the `update.example.py` file to create an `update.py` file. This is executed as part of systemd starting the service.
+- Use the `update.example.py` file to create an `update.py` file. This is executed as part of systemd starting the service. (Default `/opt/factorio/update.py`)
 
 ## Use:
 This is not an exhaustive list of all commands, but a few base features:
