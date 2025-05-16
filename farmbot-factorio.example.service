@@ -4,8 +4,8 @@ StartLimitIntervalSec=60
 StartLimitBurst=2
 
 [Service]
-ExecStart=/opt/farmbot/factorio/farmbot-factorio-env/bin/python3 /opt/farmbot/factorio/farmbot.py
-WorkingDirectory=/opt/farmbot/factorio
+ExecStart=/opt/farmbot-factorio/farmbot-factorio-env/bin/python3 /opt/farmbot-factorio/farmbot.py
+WorkingDirectory=/opt/farmbot-factorio
 Restart=on-failure
 Type=simple
 User=farmbot-factorio

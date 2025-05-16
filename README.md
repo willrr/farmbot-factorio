@@ -14,10 +14,10 @@ Farmbot Factorio is a discord bot for managing a Factorio server. It utilises py
 - Create a linux service user for `factorio`.
 - Create a linux service user for `farmbot-factorio`, adding to the `factorio` group (required for updating to work).
 - Download and extract factorio to `/opt/factorio`, ensuring that the `factorio` user and group are the owners.
-- Download the repository to `/opt/farmbot/factorio`, ensuring that the `farmbot-factorio` user and group are the owners.
+- Download the repository to `/opt/` (so the full path will be `/opt/farmbot-factorio/`), ensuring that the `farmbot-factorio` user and group are the owners.
 - Create your python venv (`farmbot-factorio-env` is the recommended name, as this is already part of the `.gitignore` file).
 - Install requirements as per `requirements.txt`.
-- Use the `config.example.json` file to create `config.json` with your settings.
+- Use the `config.example.json` file to create `config.json` with your settings. (``)
 - Use the `factorio.example.service` file to install factorio as a service within systemd (`/etc/systemd/system/factorio.service`)
 - Use the `farmbot-factorio.example.service` file to install farmbot-factorio as a service within systemd (`/etc/systemd/system/farmbot-factorio.service`)
 - Use the `factorio.sudoers.example` file to allow `farmbot-factorio` service permissions via sudo.
