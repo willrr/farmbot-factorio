@@ -1,4 +1,4 @@
-Cmnd_Alias         FACTORIO = /bin/systemctl restart factorio, /bin/systemctl start factorio, /bin/systemctl/stop factorio, /bin/systemctl status factorio
-Cmnd_Alias         SYSTEMCTL = /bin/systemctl
+Cmnd_Alias         FACTORIO = /bin/systemctl restart factorio, /bin/systemctl start factorio, /bin/systemctl/stop factorio, /bin/systemctl status factorio, /usr/bin/systemctl restart factorio, /usr/bin/systemctl start factorio, /usr/bin/systemctl stop factorio, /usr/bin/systemctl status factorio
+Cmnd_Alias         SYSTEMCTL = /bin/systemctl, /usr/bin/systemctl
 farmbot-factorio   ALL = NOPASSWD: FACTORIO
 
