@@ -67,7 +67,11 @@ def stop_factorio():
 
 
 def status_factorio():
-    status = subprocess.check_output("systemctl status factorio".split())
+    command = subprocess.run("systemctl status factorio".split(), capture_output=True)
+    if command.stderr != b'':
+        status = command.stderr
+    else:
+        status = command.stdout
     StatusCleanList = []
     for line in status.decode().split('\n'):
         if re.search(r'^\s*CGroup:|--rcon', line):
