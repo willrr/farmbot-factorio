@@ -22,6 +22,7 @@ Farmbot Factorio is a discord bot for managing a Factorio server. It utilises py
 - Use the `farmbot-factorio.example.service` file to install farmbot-factorio as a service within systemd (`/etc/systemd/system/farmbot-factorio.service`)
 - Use the `factorio.sudoers.example` file to allow `farmbot-factorio` service permissions via sudo. (`/etc/sudoers.d/factorio`)
 - Use the `update.example.py` file to create an `update.py` file. This is executed as part of systemd starting the service. (Default `/opt/factorio/update.py`)
+- Reload daemons in systemd to read the new files (`systemctl daemon-reload`)
 
 ## Use:
 This is not an exhaustive list of all commands, but a few base features:
